@@ -1,0 +1,234 @@
+cap_mi_test.financial_account_monthly_liability_fact 
+==============================================
+
+-- Record count check
+
+Select count(*)
+FROM cap_mi_test.financial_account_monthly_liability_fact
+
+Expected Result = 94365
+Actual Result = 94365
+
+
+count (*)
+FROM cap_mi_test.v_liability_detail_dim 
+(Select count (*)
+FROM
+A.Division,
+A.bancs Account Number,
+A.account Type,
+B.asset_Number,
+C.contact SCIN,
+C.contact Sensitive Indicator,
+C.contact Personal Interest Indicator,
+F.financial Calendar Month Number,
+F.financial Calendar Month Name,
+F.financial Calendar Year,
+L.liability line item Due type Code,
+L.liability Due Type Description,
+L.liability Line Item Service Type,
+L.liability Due Type Summary Grouping,
+L.liability Due Financial Month,
+L.liability Due Financial Year,
+L.liability BaNCS Account Number,
+count(*)
+FROMcap_mi_test.v_liability_detail_dim A
+FROM cap_mi_test.v_financial_account_dim A
+LEFT JOIN cap_mi_test.v_asset_dim B
+ON A.Key_1 = B.Key_1
+LEFT JOIN cap_mi_test.v_contact_dim_v2 C
+ON B.contact_id = C.contact_id
+LEFT JOIN cap_mi_test.v_contact_role_dim D
+ON B.contact_id = D.contact_id
+AND B.case_id = D.case_id
+LEFT JOIN cap_mi_test.v_liability_detail_dim E
+ON A.soc_no = A.bancs_account_number
+group by 
+A.Division,
+A.bancs Account Number,
+A.account Type,
+B.asset_Number,
+C.contact SCIN,
+C.contact Sensitive Indicator,
+C.contact Personal Interest Indicator,
+F.financial Calendar Month Number,
+F.financial Calendar Month Name,
+F.financial Calendar Year,
+L.liability line item Due type Code,
+L.liability Due Type Description,
+L.liability Line Item Service Type,
+L.liability Due Type Summary Grouping,
+L.liability Due Financial Month,
+L.liability Due Financial Year,
+L.liability BaNCS Account Number AA
+
+
+
+======================
+
+Select count(*)
+FROM
+(Select
+A.gl_transcation_date,
+A.scheme,
+A.Division,
+A.gl_branch,
+A.bancs_account_number,
+A.account_type,
+B.master_case_number_finance,
+C.contact_scin,
+C.contact_name,
+D.Contact_role,
+C.contact_sensitive_indicator,
+C.contact_personal_interest_indica,
+E.employer_reference_number,
+E.employer_name,
+count(*)
+FROM cap_mi_test.v_financial_account_dim A
+LEFT JOIN cap_mi_test.v_asset_dim B
+ON A.Key_1 = B.Key_1
+LEFT JOIN cap_mi_test.v_contact_dim_v2 C
+ON B.contact_id = C.contact_id
+LEFT JOIN cap_mi_test.v_contact_role_dim D
+ON B.contact_id = D.contact_id
+AND B.case_id = D.case_id
+LEFT JOIN cap_mi_test.v_employer_dim E
+ON B.owner_accnt_id = E.employer_id
+group by 
+A.gl_transcation_date,
+A.scheme,
+A.Division,
+A.gl_branch,
+A.bancs_account_number,
+A.account_type,
+B.master_case_number_finance,
+C.contact_scin,
+C.contact_name,
+D.Contact_role,
+C.contact_sensitive_indicator,
+C.contact_personal_interest_indica,
+E.employer_reference_number,
+E.employer_name) AA
+
+-- 758865
+
+Select *
+FROM cap_mi_test.gl_account_daily_aggregated_fact
+Where NOT EXISTS
+(Select *
+FROM
+(Select
+A.gl_transcation_date,
+A.scheme,
+A.Division,
+A.gl_branch,
+A.bancs_account_number,
+A.account_type,
+B.master_case_number_finance,
+C.contact_scin,
+C.contact_name,
+D.Contact_role,
+C.contact_sensitive_indicator,
+C.contact_personal_interest_indica,
+E.employer_reference_number,
+E.employer_name,
+count(*)
+FROM cap_mi_test.v_financial_account_dim A
+LEFT JOIN cap_mi_test.v_asset_dim B
+ON A.Key_1 = B.Key_1
+LEFT JOIN cap_mi_test.v_contact_dim_v2 C
+ON B.contact_id = C.contact_id
+LEFT JOIN cap_mi_test.v_contact_role_dim D
+ON B.contact_id = D.contact_id
+AND B.case_id = D.case_id
+LEFT JOIN cap_mi_test.v_employer_dim E
+ON B.owner_accnt_id = E.employer_id
+group by 
+A.gl_transcation_date,
+A.scheme,
+A.Division,
+A.gl_branch,
+A.bancs_account_number,
+A.account_type,
+B.master_case_number_finance,
+C.contact_scin,
+C.contact_name,
+D.Contact_role,
+C.contact_sensitive_indicator,
+C.contact_personal_interest_indica,
+E.employer_reference_number,
+E.employer_name) AA
+) 
+
+-- 0 Records
+
+-- Attribute Validation and comparison between source and gl_account_daily_aggregated_fact
+
+
+Select count(*)
+FROM
+--(Select * FROM
+(Select
+A.gl_transcation_date,
+A.scheme,
+A.Division,
+A.gl_branch,
+A.bancs_account_number,
+A.account_type,
+B.master_case_number_finance,
+C.contact_scin,
+C.contact_name,
+D.Contact_role,
+C.contact_sensitive_indicator,
+C.contact_personal_interest_indica,
+E.employer_reference_number,
+E.employer_name,
+count(*)
+FROM (Select * FROM cap_mi_test.v_financial_account_dim 
+)A
+LEFT JOIN cap_mi_test.v_asset_dim B
+ON A.Key_1 = B.Key_1
+LEFT JOIN cap_mi_test.v_contact_dim_v2 C
+ON B.contact_id = C.contact_id
+LEFT JOIN cap_mi_test.v_contact_role_dim D
+ON B.contact_id = D.contact_id
+AND B.case_id = D.case_id
+LEFT JOIN cap_mi_test.v_employer_dim E
+ON B.owner_accnt_id = E.employer_id
+group by 
+A.gl_transcation_date,
+A.scheme,
+A.Division,
+A.gl_branch,
+A.bancs_account_number,
+A.account_type,
+B.master_case_number_finance,
+C.contact_scin,
+C.contact_name,
+D.Contact_role,
+C.contact_sensitive_indicator,
+C.contact_personal_interest_indica,
+E.employer_reference_number,
+E.employer_name
+)SRC
+INNER JOIN 
+(Select *
+FROM cap_mi_test.gl_account_daily_aggregated_fact
+) TRG
+ON SRC.gl_transcation_date = TRG.gl_transcation_date
+AND SRC.scheme = TRG.scheme
+AND SRC.Division = TRG.Division
+AND SRC.gl_branch = TRG.branch
+AND SRC.bancs_account_number = TRG.bancs_account_number
+AND SRC.account_type = TRG.account_type
+AND NVL(SRC.master_case_number_finance, '0') = NVL(TRG.master_case_number_finance,'0')
+AND NVL(SRC.contact_scin, '0') = NVL(TRG.contact_scin, '0') --  752079
+AND NVL(SRC.contact_name,'0') = NVL(TRG.contact_name,'0')
+AND NVL(SRC.Contact_role,'0') = NVL(TRG.Contact_role,'0')
+AND NVL(SRC.contact_sensitive_indicator,'0') = NVL(TRG.contact_sensitive_indicator,'0')
+AND NVL(SRC.contact_personal_interest_indica,'0') = NVL(TRG.contact_personal_interest_indicator,'0')
+AND NVL(SRC.employer_reference_number,0) = NVL(TRG.employer_reference_number,0)
+AND NVL(SRC.employer_name,'0') = NVL(TRG.employer_name,'0')
+
+-- 758865
+
