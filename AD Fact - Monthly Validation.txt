@@ -1,0 +1,350 @@
+Select count(*) 
+FROM cap_mi_test.v_liability_detail_dim
+
+-- 942355
+
+
+Select count(*)
+FROM CAP_MI_TEST.yearly_liability_fact
+
+-- 447
+
+
+-- Record count Check
+
+Select
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+value_of_liability_due_financial_year,
+value_of_liability_paid_financial_year,
+value_of_liability_adjusted_bancs_financial_year,
+value_of_liability_written_off_financial_year,
+(value_of_liability_due_financial_year - value_of_liability_paid_financial_year - value_of_liability_adjusted_bancs_financial_year -
+value_of_liability_written_off_financial_year) AS value_of_liability_Outstanding_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+SUM(Due_amt) AS value_of_liability_due_financial_year, 
+SUM(paid_amt) AS value_of_liability_paid_financial_year, 
+SUM(Adj_due_amt) AS value_of_liability_adjusted_bancs_financial_year, 
+SUM(amt_written_off) AS value_of_liability_written_off_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping, 
+liability_line_item_service_type,
+Due_amt,
+Paid_amt,
+Adj_due_amt,
+amt_written_off,
+Year(current_timestamp()) AS CURRENT_YEAR,
+current_timestamp() AS PROCESS_DATE,
+CASE WHEN Month(current_timestamp()) >= 4 
+    THEN Concat(cast( Year(current_timestamp()) As String), '-',cast( Year(current_timestamp()) +1 As String))
+    ELSE Concat(cast( Year(current_timestamp()) - 1 As String), '-',cast( Year(current_timestamp()) -1 As String))
+    END AS COMPARE
+--count(*)
+From cap_mi_test.v_liability_detail_dim A
+INNER JOIN CAP_MI_TEST.v_financial_account_dim B
+ON Concat (A.soc_no, A.bancs_account_number) = B.financial_account_id
+) AA
+WHERE liability_due_financial_year != COMPARE
+Group by 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping,
+PROCESS_DATE,
+liability_line_item_service_type
+) BB
+
+-- 447 Records
+
+
+
+Select 
+SRC.liability_due_financial_year, 
+SRC.Division,
+SRC.liability_line_item_due_type_code, 
+SRC.liability_due_type_description, 
+SRC.liability_due_type_summary_grouping, 
+SRC.liability_line_item_service_type,
+TRG.liability_line_item_service_type
+FROM
+(
+Select
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+value_of_liability_due_financial_year,
+value_of_liability_paid_financial_year,
+value_of_liability_adjusted_bancs_financial_year,
+value_of_liability_written_off_financial_year,
+(value_of_liability_due_financial_year - value_of_liability_paid_financial_year - value_of_liability_adjusted_bancs_financial_year -
+value_of_liability_written_off_financial_year) AS value_of_liability_Outstanding_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+SUM(Due_amt) AS value_of_liability_due_financial_year, 
+SUM(paid_amt) AS value_of_liability_paid_financial_year, 
+SUM(Adj_due_amt) AS value_of_liability_adjusted_bancs_financial_year, 
+SUM(amt_written_off) AS value_of_liability_written_off_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping, 
+liability_line_item_service_type,
+Due_amt,
+Paid_amt,
+Adj_due_amt,
+amt_written_off,
+Year(current_timestamp()) AS CURRENT_YEAR,
+current_timestamp() AS PROCESS_DATE,
+CASE WHEN Month(current_timestamp()) >= 4 
+    THEN Concat(cast( Year(current_timestamp()) As String), '-',cast( Year(current_timestamp()) +1 As String))
+    ELSE Concat(cast( Year(current_timestamp()) - 1 As String), '-',cast( Year(current_timestamp()) -1 As String))
+    END AS COMPARE
+--count(*)
+From cap_mi_test.v_liability_detail_dim A
+INNER JOIN CAP_MI_TEST.v_financial_account_dim B
+ON Concat (A.soc_no, A.bancs_account_number) = B.financial_account_id
+) AA
+WHERE liability_due_financial_year != COMPARE
+Group by 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping,
+PROCESS_DATE,
+liability_line_item_service_type
+) BB
+) SRC
+INNER JOIN CAP_MI_TEST.yearly_liability_fact TRG
+ON SRC.liability_due_financial_year = TRG.liability_due_financial_year
+AND SRC.liability_line_item_due_type_code = TRG.liability_line_item_due_type_code
+AND SRC.liability_due_type_description = TRG.liability_due_type_description
+AND NVL(SRC.liability_line_item_service_type, '0') = NVL(TRG.liability_line_item_service_type, '0')
+AND NVL(SRC.liability_due_type_summary_grouping,'0') = NVL(TRG.liability_due_type_summary_grouping,'0')
+AND SRC.Division = TRG.Division
+ORDER BY 
+SRC.liability_due_financial_year, 
+SRC.Division,
+SRC.liability_line_item_due_type_code, 
+SRC.liability_due_type_description, 
+SRC.liability_due_type_summary_grouping, 
+SRC.liability_line_item_service_type
+
+-- 447 Records
+
+
+-- Matching Records
+
+Select 
+SRC.liability_due_financial_year, 
+SRC.Division,
+SRC.liability_line_item_due_type_code, 
+SRC.liability_due_type_description, 
+SRC.liability_due_type_summary_grouping, 
+SRC.liability_line_item_service_type
+--Select count(*)
+FROM
+(
+Select
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+value_of_liability_due_financial_year,
+value_of_liability_paid_financial_year,
+value_of_liability_adjusted_financial_year,
+value_of_liability_written_off_financial_year,
+(value_of_liability_due_financial_year - value_of_liability_paid_financial_year - value_of_liability_adjusted_financial_year -
+value_of_liability_written_off_financial_year) AS value_of_liability_Outstanding_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+SUM(Due_amt) AS value_of_liability_due_financial_year, 
+SUM(paid_amt) AS value_of_liability_paid_financial_year, 
+SUM(Adj_due_amt) AS value_of_liability_adjusted_financial_year, 
+SUM(amt_written_off) AS value_of_liability_written_off_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping, 
+liability_line_item_service_type,
+Due_amt,
+Paid_amt,
+Adj_due_amt,
+amt_written_off,
+Year(current_timestamp()) AS CURRENT_YEAR,
+current_timestamp() AS PROCESS_DATE,
+CASE WHEN Month(current_timestamp()) >= 4 
+    THEN Concat(cast( Year(current_timestamp()) As String), '-',cast( Year(current_timestamp()) +1 As String))
+    ELSE Concat(cast( Year(current_timestamp()) - 1 As String), '-',cast( Year(current_timestamp()) -1 As String))
+    END AS COMPARE
+--count(*)
+From cap_mi_test.v_liability_detail_dim A
+INNER JOIN CAP_MI_TEST.v_financial_account_dim B
+ON Concat (A.soc_no, A.bancs_account_number) = B.financial_account_id
+) AA
+WHERE liability_due_financial_year != COMPARE
+Group by 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping,
+PROCESS_DATE,
+liability_line_item_service_type
+) BB
+) SRC
+INNER JOIN 
+--Select count(*) FROM
+CAP_MI_TEST.yearly_liability_fact TRG
+ON SRC.liability_due_financial_year = TRG.liability_due_financial_year
+AND SRC.liability_line_item_due_type_code = TRG.liability_line_item_due_type_code
+AND SRC.liability_due_type_description = TRG.liability_due_type_description
+AND NVL(SRC.liability_line_item_service_type, '0') = NVL(TRG.liability_line_item_service_type, '0')
+AND NVL(SRC.liability_due_type_summary_grouping,'0') = NVL(TRG.liability_due_type_summary_grouping,'0')
+AND SRC.Division = TRG.Division
+AND round(SRC.value_of_liability_due_financial_year,2) = round(TRG.value_of_liability_due_financial_year,2)
+AND round(SRC.value_of_liability_paid_financial_year,2) = round(TRG.value_of_liability_paid_financial_year,2)
+AND round(SRC.value_of_liability_adjusted_financial_year ,2)= round(TRG.value_of_liability_adjusted_financial_year,2)
+AND round(SRC.value_of_liability_written_off_financial_year,2) = round(TRG.value_of_liability_written_off_financial_year,2)
+AND round(SRC.value_of_liability_outstanding_financial_year,2) = round(TRG.value_of_liability_outstanding_financial_year,2)
+
+-- 447 Records
+
+-- Unmatched Records
+
+Select 
+SRC.liability_due_financial_year, 
+SRC.Division,
+SRC.liability_line_item_due_type_code, 
+SRC.liability_due_type_description, 
+SRC.liability_due_type_summary_grouping, 
+SRC.liability_line_item_service_type,
+round(SRC.value_of_liability_due_financial_year,2),
+TRG.value_of_liability_due_financial_year
+--Select count(*)
+FROM
+(
+Select
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+value_of_liability_due_financial_year,
+value_of_liability_paid_financial_year,
+value_of_liability_adjusted_financial_year,
+value_of_liability_written_off_financial_year,
+(value_of_liability_due_financial_year - value_of_liability_paid_financial_year - value_of_liability_adjusted_financial_year -
+value_of_liability_written_off_financial_year) AS value_of_liability_Outstanding_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_line_item_service_type,
+liability_due_type_summary_grouping, 
+Division,
+SUM(Due_amt) AS value_of_liability_due_financial_year, 
+SUM(paid_amt) AS value_of_liability_paid_financial_year, 
+SUM(Adj_due_amt) AS value_of_liability_adjusted_financial_year, 
+SUM(amt_written_off) AS value_of_liability_written_off_financial_year,
+PROCESS_DATE
+FROM
+(Select 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping, 
+liability_line_item_service_type,
+Due_amt,
+Paid_amt,
+Adj_due_amt,
+amt_written_off,
+Year(current_timestamp()) AS CURRENT_YEAR,
+current_timestamp() AS PROCESS_DATE,
+CASE WHEN Month(current_timestamp()) >= 4 
+    THEN Concat(cast( Year(current_timestamp()) As String), '-',cast( Year(current_timestamp()) +1 As String))
+    ELSE Concat(cast( Year(current_timestamp()) - 1 As String), '-',cast( Year(current_timestamp()) As String))
+    END AS COMPARE
+--count(*)
+From cap_mi_test.v_liability_detail_dim A
+INNER JOIN CAP_MI_TEST.v_financial_account_dim B
+ON Concat (A.soc_no, A.bancs_account_number) = B.financial_account_id
+) AA
+WHERE liability_due_financial_year != COMPARE
+Group by 
+liability_due_financial_year, 
+Division,
+liability_line_item_due_type_code, 
+liability_due_type_description, 
+liability_due_type_summary_grouping,
+PROCESS_DATE,
+liability_line_item_service_type
+) BB
+) SRC
+INNER JOIN 
+--Select count(*) FROM
+CAP_MI_TEST.yearly_liability_fact TRG
+ON SRC.liability_due_financial_year = TRG.liability_due_financial_year
+AND SRC.liability_line_item_due_type_code = TRG.liability_line_item_due_type_code
+AND SRC.liability_due_type_description = TRG.liability_due_type_description
+AND NVL(SRC.liability_line_item_service_type, '0') = NVL(TRG.liability_line_item_service_type, '0')
+AND NVL(SRC.liability_due_type_summary_grouping,'0') = NVL(TRG.liability_due_type_summary_grouping,'0')
+AND SRC.Division = TRG.Division
+AND(round(SRC.value_of_liability_due_financial_year,2) <> round(TRG.value_of_liability_due_financial_year,2)
+or round(SRC.value_of_liability_paid_financial_year,2) <> round(TRG.value_of_liability_paid_financial_year,2)
+or round(SRC.value_of_liability_adjusted_financial_year,2) <> round(TRG.value_of_liability_adjusted_financial_year,2)
+or round(SRC.value_of_liability_written_off_financial_year,2) <> round(TRG.value_of_liability_written_off_financial_year,2)
+or round(SRC.value_of_liability_outstanding_financial_year,2) <> round(TRG.value_of_liability_outstanding_financial_year,2))
+
+
+-- 0 Records
